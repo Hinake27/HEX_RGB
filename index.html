@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEX色碼檢查工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #6e8efb 0%, #ff9a9e 100%);
+            min-height: 100vh;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        #preview {
+            max-width: 300px;
+            max-height: 300px;
+            display: block;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        #colorInput {
+            width: 100%;
+            height: 300px;
+            margin: 10px 0;
+            font-family: monospace;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: white;
+        }
+
+        #colorInput::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .color-result {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .color-result:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .color-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+
+        .color-sample {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .color-sample:hover {
+            transform: scale(1.2);
+        }
+
+        .similar-colors {
+            display: none;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .similar-color {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 8px 0;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .similar-color:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .hex-code {
+            cursor: pointer;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            user-select: all;
+            transition: background 0.2s ease;
+        }
+
+        .hex-code:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .found { 
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .not-found { 
+            background: rgba(244, 67, 54, 0.1);
+        }
+
+        .stats {
+            color: white;
+            margin: 20px 0;
+            padding: 15px;
+        }
+
+        button {
+            padding: 8px 16px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .copy-button {
+            padding: 4px 12px;
+            font-size: 12px;
+            margin-left: auto;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .copy-button:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .copied {
+            background: rgba(76, 175, 80, 0.6) !important;
+            color: white;
+        }
+
+        .has-similar .color-header::after {
+            content: "↓";
+            margin-left: 5px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        input[type="file"] {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        h1 {
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="glass-effect">
+        <h1>HEX色碼檢查工具</h1>
+        <div>
+            <input type="file" id="imageInput" accept="image/*">
+            <button onclick="analyzeColors()">分析顏色</button>
+            <button onclick="clearInput()">清空輸入</button>
+        </div>
+    </div>
+    
+    <canvas id="canvas" style="display:none;"></canvas>
+    <img id="preview" alt="預覽圖片">
+    
+    <textarea id="colorInput" placeholder="貼入任何包含HEX色碼的文字，例如：#FF0000 或其他格式"></textarea>
+    <div class="stats glass-effect" id="statsContainer"></div>
+    <div class="results-grid" id="resultContainer"></div>
+
+    <script>
+        let imageColors = [];
+
+        function clearInput() {
+            document.getElementById('colorInput').value = '';
+            document.getElementById('resultContainer').innerHTML = '';
+            document.getElementById('statsContainer').innerHTML = '';
+        }
+
+        function copyToClipboard(text, button) {
+            navigator.clipboard.writeText(text).then(() => {
+                button.textContent = '已複製！';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = '複製';
+                    button.classList.remove('copied');
+                }, 1000);
+            });
+        }
+
+        function extractHexColors(text) {
+            const hexPattern = /#[0-9A-Fa-f]{6}\b/g;
+            const matches = text.match(hexPattern) || [];
+            return [...new Set(matches)].map(hex => hex.toLowerCase());
+        }
+
+        function analyzeColors() {
+            const input = document.getElementById("colorInput").value;
+            const hexColors = extractHexColors(input);
+            displayResults(hexColors);
+        }
+
+        document.getElementById('imageInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const img = document.getElementById('preview');
+            img.src = URL.createObjectURL(file);
+
+            img.onload = function() {
+                const canvas = document.getElementById('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0, img.width, img.height);
+
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+                imageColors = extractUniqueColors(imageData);
+                document.getElementById('statsContainer').innerHTML = 
+                    `<div>圖片中共有 ${imageColors.length} 個獨特顏色</div>`;
+            };
+        });
+
+        function extractUniqueColors(data) {
+            const colors = new Set();
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                const hex = rgbToHex([r, g, b]);
+                colors.add(hex);
+            }
+            return Array.from(colors);
+        }
+
+        function rgbToHex([r, g, b]) {
+            return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`.toLowerCase();
+        }
+
+        function toggleSimilarColors(element, event) {
+            if (!event.target.classList.contains('copy-button') && 
+                !event.target.classList.contains('hex-code')) {
+                const similarColors = element.querySelector('.similar-colors');
+                if (similarColors) {
+                    if (similarColors.style.display === 'none' || !similarColors.style.display) {
+                        similarColors.style.display = 'block';
+                        similarColors.style.animation = 'slideDown 0.3s ease';
+                    } else {
+                        similarColors.style.display = 'none';
+                    }
+                }
+                
+                // 添加點擊動畫
+                const colorSample = element.querySelector('.color-sample');
+                colorSample.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    colorSample.style.transform = 'scale(1)';
+                }, 200);
+            }
+        }
+
+        function displayResults(hexColors) {
+            const resultContainer = document.getElementById("resultContainer");
+            const statsContainer = document.getElementById("statsContainer");
+            resultContainer.innerHTML = '';
+
+            let foundCount = 0;
+            let nearMatchCount = 0;
+            let noMatchCount = 0;
+
+            hexColors.forEach(hex => {
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'color-result';
+                
+                const rgb = hexToRgb(hex);
+                const toleranceMatches = findSimilarColors(rgb, 5);
+                
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'color-header';
+                
+                const colorSample = document.createElement('span');
+                colorSample.className = 'color-sample';
+                colorSample.style.backgroundColor = hex;
+                headerDiv.appendChild(colorSample);
+
+                const infoDiv = document.createElement('div');
+                if (imageColors.includes(hex)) {
+                    resultDiv.className += ' found';
+                    infoDiv.innerHTML = `
+                        <div class="hex-code">${hex}</div>
+                        <div style="color: green;">✓ 完全符合</div>
+                    `;
+                    foundCount++;
+                } else {
+                    resultDiv.className += ' not-found';
+                    if (toleranceMatches.length > 0) {
+                        resultDiv.className += ' has-similar';
+                        infoDiv.innerHTML = `
+                            <div class="hex-code">${hex}</div>
+                            <div style="color: orange;">⚠ 發現${toleranceMatches.length}個相近色</div>
+                        `;
+                        nearMatchCount++;
+
+                        const similarDiv = document.createElement('div');
+                        similarDiv.className = 'similar-colors';
+                        toleranceMatches.forEach(similarHex => {
+                            const similarColor = document.createElement('div');
+                            similarColor.className = 'similar-color';
+                            const copyButton = document.createElement('button');
+                            copyButton.className = 'copy-button';
+                            copyButton.textContent = '複製';
+                            copyButton.onclick = (e) => {
+                                e.stopPropagation();
+                                copyToClipboard(similarHex, copyButton);
+                            };
+                            similarColor.innerHTML = `
+                                <span class="color-sample" style="background-color: ${similarHex}"></span>
+                                <span class="hex-code">${similarHex}</span>
+                            `;
+                            similarColor.appendChild(copyButton);
+                            similarDiv.appendChild(similarColor);
+                        });
+                        resultDiv.appendChild(similarDiv);
+                    } else {
+                        infoDiv.innerHTML = `
+                            <div class="hex-code">${hex}</div>
+                            <div style="color: red;">✗ 未找到</div>
+                        `;
+                        noMatchCount++;
+                    }
+                }
+                headerDiv.appendChild(infoDiv);
+                resultDiv.insertBefore(headerDiv, resultDiv.firstChild);
+                
+                headerDiv.addEventListener('click', (e) => toggleSimilarColors(resultDiv, e));
+                
+                resultContainer.appendChild(resultDiv);
+            });
+
+            statsContainer.innerHTML = `
+                <div><strong>分析結果：</strong></div>
+                <div>完全符合：${foundCount} 個</div>
+                <div>發現相近色：${nearMatchCount} 個</div>
+                <div>未找到：${noMatchCount} 個</div>
+                <div>總計：${hexColors.length} 個色碼</div>
+            `;
+        }
+
+        function hexToRgb(hex) {
+            const bigint = parseInt(hex.slice(1), 16);
+            const r = (bigint >> 16) & 255;
+            const g = (bigint >> 8) & 255;
+            const b = bigint & 255;
+            return [r, g, b];
+        }
+		function findSimilarColors(rgb, tolerance) {
+            const [r, g, b] = rgb;
+            return imageColors.filter(color => {
+                const [cr, cg, cb] = hexToRgb(color);
+                return (
+                    Math.abs(cr - r) <= tolerance &&
+                    Math.abs(cg - g) <= tolerance &&
+                    Math.abs(cb - b) <= tolerance
+                );
+            });
+        }
+    </script>
+</body>
+</html>
